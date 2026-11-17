@@ -1,8 +1,7 @@
-# VPS Panel (C edition)
+# VPS Monitoring
 
 A single-binary VPS management panel written in C, statically linked against musl libc.
 It uses about 0.3MB RSS (0.2MB per cgroup) and sits behind Caddy with automatic HTTPS.
-Live at `tencent140.vps.hanifu.id`.
 
 ## Features
 
@@ -19,7 +18,6 @@ Live at `tencent140.vps.hanifu.id`.
 ## Source layout
 
 ```
-/opt/caddy-panel-c/
 ├── panel.c          # C backend, all API and logic (~1.1k lines)
 ├── index.html       # UI (vanilla JS + CSS, particles.js background from cdnjs)
 ├── panel            # compiled binary (musl static)
@@ -120,16 +118,5 @@ journalctl -u caddy -f           # caddy and ACME logs
 tail -f /var/log/vps-alerts.log  # resource alerts
 ```
 
-The panel starts on boot. Sites added through the panel need DNS pointing at the VPS
-(a wildcard `*.tencent140.vps.hanifu.id -> 43.173.38.140` is recommended). Caddy issues
-the HTTPS certificate automatically once DNS resolves.
 
-## Old Python panel
 
-The Flask version lives in `/opt/caddy-panel/`. It is disabled and safe to remove:
-
-```bash
-rm -rf /opt/caddy-panel /etc/systemd/system/caddy-panel.service
-```
-
-*Connected and built for [hanifu.id](https://hanifu.id) / [github.com/hansputera](https://github.com/hansputera)*
