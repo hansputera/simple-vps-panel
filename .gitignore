@@ -1,0 +1,18 @@
+# build artifacts
+build/
+panel
+panel.new
+panel.glibc
+*.o
+*.a
+*.so
+
+# runtime data, never commit
+config
+sites.conf
+extra/
+
+# editor and OS noise
+*.swp
+*.swo
+.DS_Store

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPS Panel (C edition)</title>
+<style>
+:root{--bg:#0b0f17;--card:#121826;--card2:#0e1420;--line:#1f2937;--txt:#e5e9f0;--mut:#8b95a7;--acc:#4f8cff;--ok:#34d399;--bad:#f87171;--warn:#fbbf24;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
+.wrap{max-width:1060px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:2}
+#particles-js{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.dot{width:11px;height:11px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.brand h1{font-size:17px;font-weight:650}
+.mut{color:var(--mut);font-size:13px}
+.brand .mut{margin-left:auto}
+nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+nav button{background:var(--card);border:1px solid var(--line);color:var(--mut);padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer}
+nav button:hover{color:var(--txt)}
+nav button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:12.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--mut);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card h2 .r{margin-left:auto;text-transform:none;letter-spacing:0}
+button.act{background:var(--acc);border:none;color:#fff;font-weight:600;font-size:13.5px;padding:8px 14px;border-radius:8px;cursor:pointer}
+button.act:hover{filter:brightness(1.12)}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--mut);padding:7px 13px;border-radius:8px;font-size:13px;cursor:pointer}
+button.ghost:hover{color:var(--txt);border-color:var(--mut)}
+button.danger{background:transparent;border:1px solid rgba(248,113,113,.4);color:var(--bad);padding:4px 11px;border-radius:7px;font-size:12.5px;cursor:pointer}
+button.danger:hover{background:rgba(248,113,113,.1)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat .lbl{font-size:12px;color:var(--mut)}
+.stat .val{font-size:19px;font-weight:650;margin-top:2px}
+.stat .sub{font-size:11.5px;color:var(--mut)}
+.bar{height:5px;border-radius:3px;background:var(--line);margin-top:9px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);border-radius:3px;transition:width .4s}
+.bar i.warn{background:var(--warn)}.bar i.bad{background:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--mut);font-weight:500;font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;padding:7px 9px;border-bottom:1px solid var(--line)}
+td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:600}
+.pill.ok{background:rgba(52,211,153,.12);color:var(--ok)}
+.pill.bad{background:rgba(248,113,113,.12);color:var(--bad)}
+.pill.off{background:rgba(139,149,167,.12);color:var(--mut)}
+.pill.warn{background:rgba(251,191,36,.12);color:var(--warn)}
+input{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:9px 12px;font-size:14px;width:100%;outline:none}
+input:focus{border-color:var(--acc)}
+label{display:block;font-size:12px;color:var(--mut);margin:9px 0 4px}
+.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.row>div{flex:1;min-width:140px}
+.msg{padding:9px 13px;border-radius:8px;font-size:13px;margin-top:11px;display:none}
+.msg.err{display:block;background:rgba(248,113,113,.1);color:var(--bad);border:1px solid rgba(248,113,113,.25)}
+.msg.ok{display:block;background:rgba(52,211,153,.1);color:var(--ok);border:1px solid rgba(52,211,153,.25)}
+details summary{cursor:pointer;color:var(--mut);font-size:13px}
+textarea{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:10px;font:13px/1.55 var(--mono);width:100%;min-height:110px;outline:none;resize:vertical}
+textarea:focus{border-color:var(--acc)}
+#site-editor{background:var(--card2)}
+.hidden{display:none!important}
+.center{display:flex;align-items:center;justify-content:center;min-height:88vh;position:relative;z-index:2}
+.login{width:360px}
+#termout{background:#05070c;border:1px solid var(--line);border-radius:9px;padding:12px;font:12.5px/1.55 var(--mono);color:#c9d4e5;white-space:pre-wrap;word-break:break-all;max-height:420px;overflow:auto;margin-top:10px;min-height:120px}
+.termrow{display:flex;gap:8px}
+.termrow input{flex:1;font-family:var(--mono)}
+.warnbox{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);color:var(--warn);font-size:12.5px;padding:8px 12px;border-radius:8px;margin-bottom:10px}
+.kv{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.kv:last-child{border:none}
+.kv b{font-family:var(--mono);font-weight:600}
+.foot{text-align:center;color:var(--mut);font-size:12.5px;margin-top:20px;position:relative;z-index:2}
+.foot a{color:var(--acc);text-decoration:none}
+.foot a:hover{text-decoration:underline}
+.center2{text-align:center}
+@media(max-width:640px){.row>div{min-width:100%}}
+</style>
+</head>
+<body>
+<div id="particles-js"></div>
+
+<div id="login" class="center hidden">
+  <div class="card login">
+    <div class="brand"><span class="dot"></span><h1>VPS Panel</h1></div>
+    <label>Password</label>
+    <input type="password" id="lpw" placeholder="••••••••••••">
+    <div style="margin-top:12px"><button class="act" onclick="login()">Sign in</button></div>
+    <div id="lmsg" class="msg"></div>
+  </div>
+</div>
+
+<div id="app" class="wrap hidden">
+  <div class="brand">
+    <span class="dot" id="dot"></span>
+    <h1>VPS Panel</h1>
+    <span class="mut">tencent140.vps.hanifu.id</span>
+    <button class="ghost" style="margin-left:auto" onclick="logout()">Logout</button>
+  </div>
+
+  <nav>
+    <button class="on" data-t="dash" onclick="tab('dash')">Dashboard</button>
+    <button data-t="sites" onclick="tab('sites')">Sites</button>
+    <button data-t="term" onclick="tab('term')">Terminal</button>
+    <button data-t="procs" onclick="tab('procs')">Processes</button>
+    <button data-t="ports" onclick="tab('ports')">Ports</button>
+    <button data-t="files" onclick="tab('files')">Files</button>
+    <button data-t="svcs" onclick="tab('svcs')">Services</button>
+  </nav>
+
+  <div id="t-dash">
+    <div class="card">
+      <h2>System</h2>
+      <div class="grid">
+        <div class="stat"><div class="lbl">Memory</div><div class="val" id="s-mem">—</div><div class="bar"><i id="b-mem"></i></div><div class="sub" id="s-memsub"></div></div>
+        <div class="stat"><div class="lbl">Swap (zram)</div><div class="val" id="s-swap">—</div><div class="bar"><i id="b-swap"></i></div><div class="sub" id="s-swapsub"></div></div>
+        <div class="stat"><div class="lbl">Disk</div><div class="val" id="s-disk">—</div><div class="bar"><i id="b-disk"></i></div><div class="sub" id="s-disksub"></div></div>
+        <div class="stat"><div class="lbl">Load</div><div class="val" id="s-load">—</div><div class="sub" id="s-up"></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>CPU <span class="r mut" id="cpu-pct-lbl"></span></h2>
+      <div class="grid">
+        <div class="stat" style="grid-column:1/-1">
+          <div class="val" id="cpu-model" style="font-size:14.5px;font-family:var(--mono)">—</div>
+          <div class="bar"><i id="b-cpu"></i></div>
+          <div class="sub" id="cpu-sub" style="margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>fail2ban <span class="r" id="f2b-pill"></span></h2>
+      <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+        <div class="stat center2"><div class="lbl">Currently failed</div><div class="val" id="f2b-cf">—</div></div>
+        <div class="stat center2"><div class="lbl">Total failed</div><div class="val" id="f2b-tf">—</div></div>
+        <div class="stat center2"><div class="lbl">Currently banned</div><div class="val" id="f2b-cb">—</div></div>
+        <div class="stat center2"><div class="lbl">Total banned</div><div class="val" id="f2b-tb">—</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Services</h2>
+      <div id="services"></div>
+    </div>
+    <div class="card">
+      <h2>Change panel password</h2>
+      <div class="row">
+        <div><label>Current</label><input type="password" id="c-cur"></div>
+        <div><label>New (min 10)</label><input type="password" id="c-new"></div>
+        <div style="flex:0"><button class="ghost" onclick="chgPw()">Update</button></div>
+      </div>
+      <div id="cmsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div id="t-sites" class="hidden">
+    <div class="card">
+      <h2>Reverse proxy sites <span class="r"><button class="ghost" onclick="refresh()">Reload</button></span></h2>
+      <table>
+        <thead><tr><th>Domain</th><th>Target</th><th>Auth</th><th>Status</th><th></th></tr></thead>
+        <tbody id="sites"></tbody>
+      </table>
+      <details style="margin-top:14px">
+        <summary>＋ Add new site</summary>
+        <div class="row" style="margin-top:10px">
+          <div><label>Domain</label><input id="n-domain" placeholder="app2.tencent140.vps.hanifu.id"></div>
+          <div><label>Target</label><input id="n-target" placeholder="localhost:3000"></div>
+        </div>
+        <label style="margin-top:10px">Extra Caddy directives (optional, goes inside the site block)</label>
+        <textarea id="n-extra" placeholder="redir /old /new&#10;@api path /api/*&#10;reverse_proxy @api localhost:4000"></textarea>
+        <div style="margin-top:8px"><button class="ghost" onclick="validateCaddy('n')">🧪 Validate</button> <span class="mut">cek syntax via caddy validate sebelum disimpan</span></div>
+        <details style="margin-top:8px">
+          <summary>Optional: basic auth</summary>
+          <div class="row" style="margin-top:6px">
+            <div><label>Username</label><input id="n-user"></div>
+            <div><label>Password (min 8)</label><input id="n-pass"></div>
+          </div>
+        </details>
+        <div style="margin-top:12px"><button class="act" onclick="addSite()">Add site</button></div>
+      </details>
+      <div id="smsg" class="msg"></div>
+      <div class="card" id="site-editor" style="display:none;margin-top:14px;background:var(--card2)">
+        <h2>Edit <span id="ed-domain" style="color:var(--txt);text-transform:none;letter-spacing:0"></span> <span class="r"><button class="ghost" onclick="closeEdit()">✕ Close</button></span></h2>
+        <div class="row">
+          <div><label>Target</label><input id="e-target"></div>
+        </div>
+        <label style="margin-top:10px">Extra Caddy directives</label>
+        <textarea id="e-extra"></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="act" onclick="saveEdit()">Save</button>
+          <button class="ghost" onclick="validateCaddy('e')">🧪 Validate</button>
+        </div>
+      </div>
+      <div id="emsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div id="t-term" class="hidden">
+    <div class="card">
+      <h2>Remote shell <span class="r pill warn">runs as ROOT</span></h2>
+      <div class="warnbox">⚠ Commands execute on the VPS as root. Anything you type here has full system access.</div>
+      <div class="termrow">
+        <input id="cmd" placeholder="e.g. df -h · systemctl status caddy · journalctl -u caddy -n 20" onkeydown="if(event.key==='Enter')exec()">
+        <button class="act" onclick="exec()">Run</button>
+      </div>
+      <div id="termout">$ ready.</div>
+    </div>
+  </div>
+
+  <div id="t-procs" class="hidden">
+    <div class="card">
+      <h2>Processes (top by CPU) <span class="r"><button class="ghost" onclick="loadProcs()">Refresh</button></span></h2>
+      <table>
+        <thead><tr><th>PID</th><th>User</th><th>CPU%</th><th>Mem</th><th>Command</th><th></th></tr></thead>
+        <tbody id="procs"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="t-ports" class="hidden">
+    <div class="card">
+      <h2>Listening ports <span class="r"><button class="ghost" onclick="loadPorts()">Refresh</button></span></h2>
+      <table>
+        <thead><tr><th>Port</th><th>Proto</th><th>Process</th><th>User</th><th>Connections</th></tr></thead>
+        <tbody id="portrows"></tbody>
+      </table>
+      <div class="mut" style="margin-top:10px">Live from /proc/net: LISTEN sockets mapped to owning processes, with active connection counts.</div>
+    </div>
+  </div>
+
+  <div id="t-files" class="hidden">
+    <div class="card">
+      <h2>File manager <span class="r pill warn">ROOT access</span></h2>
+      <div class="row">
+        <div style="flex:3"><label>Path</label><input id="f-path" value="/" onkeydown="if(event.key==='Enter')goPath()"></div>
+        <div style="flex:0;display:flex;gap:6px">
+          <button class="ghost" onclick="goPath()">Go</button>
+          <button class="ghost" onclick="upDir()">↑ Up</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:0"><button class="ghost" onclick="mkPrompt('dir')">＋ Folder</button></div>
+        <div style="flex:0"><button class="ghost" onclick="mkPrompt('file')">＋ File</button></div>
+        <div style="flex:0"><button class="ghost" onclick="$('f-upload').click()">⬆ Upload</button></div>
+        <input type="file" id="f-upload" class="hidden" onchange="uploadFile(this)">
+      </div>
+      <div id="fedit" class="hidden" style="margin-top:12px">
+        <label style="color:var(--acc)">Editing: <span id="fedit-path" style="font-family:var(--mono)"></span></label>
+        <textarea id="fedit-content" style="min-height:220px"></textarea>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="act" onclick="saveEditFile()">💾 Save</button>
+          <button class="ghost" onclick="$('fedit').classList.add('hidden')">Close</button>
+        </div>
+      </div>
+      <table style="margin-top:14px">
+        <thead><tr><th>Name</th><th>Size</th><th>Modified</th><th>Mode</th><th></th></tr></thead>
+        <tbody id="filerows"></tbody>
+      </table>
+      <div id="fmsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div id="t-svcs" class="hidden">
+    <div class="card">
+      <h2>systemd services <span class="r"><button class="ghost" onclick="loadSvcs()">Refresh</button></span></h2>
+      <input id="svc-filter" placeholder="filter…" oninput="filterSvcs()" style="max-width:280px;margin-bottom:10px">
+      <table>
+        <thead><tr><th>Unit</th><th>State</th><th>Description</th><th></th></tr></thead>
+        <tbody id="svcs"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">Connected and built for <a href="https://hanifu.id" target="_blank" rel="noopener">hanifu.id</a> / <a href="https://github.com/hansputera" target="_blank" rel="noopener">github.com/hansputera</a></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+<script>
+const H={'Content-Type':'application/json','X-Requested-With':'fetch'};
+const $=id=>document.getElementById(id);
+const fmt=b=>b>1073741824?(b/1073741824).toFixed(1)+' GB':(b/1048576).toFixed(0)+' MB';
+const pct=(a,b)=>b?Math.round(a/b*100):0;
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function api(path,opts={}){
+  const r=await fetch(path,{headers:H,...opts});
+  if(path==='/api/login'&&r.status===401){
+    const d=await r.json().catch(()=>({}));
+    throw d.error||'wrong password';
+  }
+  if(r.status===401){showLogin();throw 'session expired'}
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw d.error||('HTTP '+r.status);
+  return d;
+}
+function showLogin(){$('login').classList.remove('hidden');$('app').classList.add('hidden')}
+function showApp(){$('app').classList.remove('hidden');$('login').classList.add('hidden');refresh()}
+async function login(){
+  try{await api('/api/login',{method:'POST',body:JSON.stringify({password:$('lpw').value})});showApp()}
+  catch(e){$('lmsg').className='msg err';$('lmsg').textContent=(e==='wrong password')?'Wrong password, try again':e}
+}
+async function logout(){await api('/api/logout',{method:'POST'});showLogin()}
+function tab(t){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  ['dash','sites','term','procs','ports','files','svcs'].forEach(x=>$('t-'+x).classList.toggle('hidden',x!==t));
+  if(t==='dash')refresh(); if(t==='procs')loadProcs(); if(t==='svcs')loadSvcs(); if(t==='sites')refresh(); if(t==='ports')loadPorts(); if(t==='files')loadFiles();
+}
+function msg(id,ok,text){const m=$(id);m.className='msg '+(ok?'ok':'err');m.textContent=text;setTimeout(()=>m.className='msg',6000)}
+
+async function refresh(){
+  try{
+    const st=await api('/api/status');
+    const mp=pct(st.mem_used,st.mem_total),dp=pct(st.disk_used,st.disk_total),sp=pct(st.swap_used,st.swap_total);
+    $('s-mem').textContent=fmt(st.mem_used);$('b-mem').style.width=mp+'%';
+    $('b-mem').className=mp>90?'bad':mp>75?'warn':'';
+    $('s-memsub').textContent='of '+fmt(st.mem_total)+' ('+mp+'%)';
+    $('s-swap').textContent=fmt(st.swap_used);$('b-swap').style.width=sp+'%';
+    $('s-swapsub').textContent=st.swap_total?'of '+fmt(st.swap_total)+' ('+sp+'%)':'none';
+    $('s-disk').textContent=fmt(st.disk_used);$('b-disk').style.width=dp+'%';
+    $('b-disk').className=dp>90?'bad':dp>80?'warn':'';
+    $('s-disksub').textContent='of '+fmt(st.disk_total)+' ('+dp+'%)';
+    $('s-load').textContent=st.load.join(' / ');
+    const d=Math.floor(st.uptime_s/86400),h=Math.floor(st.uptime_s%86400/3600),m=Math.floor(st.uptime_s%3600/60);
+    $('s-up').textContent='up '+d+'d '+h+'h '+m+'m';
+    $('cpu-model').textContent=st.cpu_model;
+    $('b-cpu').style.width=st.cpu_pct+'%';
+    $('b-cpu').className=st.cpu_pct>85?'bad':st.cpu_pct>60?'warn':'';
+    $('cpu-pct-lbl').textContent=st.cpu_pct+'% now';
+    $('cpu-sub').textContent=st.cpu_cores+' vCPU · '+st.cpu_arch;
+    $('f2b-pill').innerHTML=st.f2b.active?'<span class="pill ok">active</span>':'<span class="pill bad">inactive</span>';
+    $('f2b-cf').textContent=st.f2b.cur_f;$('f2b-tf').textContent=st.f2b.tot_f;
+    $('f2b-cb').textContent=st.f2b.cur_b;$('f2b-tb').textContent=st.f2b.tot_b;
+    $('services').innerHTML='<div class="grid">'+Object.entries(st.services).map(([k,v])=>
+      '<div class="stat"><div class="lbl" style="display:flex;justify-content:space-between">'+k+
+      (v==='active'?'<span class="pill ok">active</span>':'<span class="pill bad">'+v+'</span>')+'</div></div>').join('')+'</div>';
+    $('dot').style.background=st.services.caddy==='active'?'var(--ok)':'var(--bad)';
+    if(!$('t-sites').classList.contains('hidden'))loadSites(st);
+  }catch(e){if(e)console.error(e)}
+}
+
+function renderSites(sites){
+  $('sites').innerHTML=sites.length?sites.map(s=>
+    '<tr><td><b>'+esc(s.domain)+'</b>'+(s.extra?'<div class="mut" style="font-size:11px;font-family:var(--mono)">+ custom directives</div>':'')+'</td>'+
+    '<td class="mut">'+esc(s.target)+'</td><td>'+
+    (s.auth_user?'<span class="pill off">'+esc(s.auth_user)+'</span>':'<span class="mut">—</span>')+'</td>'+
+    '<td>'+(s.upstream_alive?'<span class="pill ok">up</span>':'<span class="pill bad">down</span>')+'</td>'+
+    '<td style="text-align:right;white-space:nowrap"><button class="ghost" onclick="editSite(\''+s.domain+'\')">⚙ Edit</button> '+
+    '<button class="danger" onclick="delSite(\''+s.domain+'\')">Delete</button></td></tr>'
+  ).join(''):'<tr><td colspan="5" class="mut">No sites yet. Add one below.</td></tr>';
+}
+async function loadSites(st){
+  if(!st)st=await api('/api/status');
+  const sites=(await api('/api/sites')).sites;
+  renderSites(sites);
+}
+function editSite(d){
+  api('/api/sites').then(x=>{
+    const s=x.sites.find(z=>z.domain===d); if(!s)return;
+    $('ed-domain').textContent=d; $('e-target').value=s.target; $('e-extra').value=s.extra||'';
+    $('site-editor').style.display='block';
+    $('site-editor').scrollIntoView({behavior:'smooth'});
+  });
+}
+function closeEdit(){$('site-editor').style.display='none'}
+async function saveEdit(){
+  try{
+    await api('/api/sites/update',{method:'POST',body:JSON.stringify({
+      domain:$('ed-domain').textContent,target:$('e-target').value,extra:$('e-extra').value})});
+    msg('smsg',true,'Site updated.');closeEdit();loadSites();
+  }catch(e){msg('smsg',false,e)}
+}
+async function validateCaddy(src){
+  const domain=src==='n'?$('n-domain').value:$('ed-domain').textContent;
+  const target=src==='n'?$('n-target').value:$('e-target').value;
+  const extra=src==='n'?$('n-extra').value:$('e-extra').value;
+  if(!domain||!target){msg(src==='n'?'smsg':'emsg',false,'domain & target wajib diisi dulu');return}
+  try{
+    const d=await api('/api/caddy/validate',{method:'POST',body:JSON.stringify({domain,target,extra})});
+    msg(src==='n'?'smsg':'emsg',d.ok,d.ok?'✔ Caddyfile valid, syntax OK':'✘ '+d.error);
+  }catch(e){msg(src==='n'?'smsg':'emsg',false,e)}
+}
+async function addSite(){
+  try{
+    await api('/api/sites',{method:'POST',body:JSON.stringify({
+      domain:$('n-domain').value,target:$('n-target').value,extra:$('n-extra').value,
+      auth_user:$('n-user').value,auth_pass:$('n-pass').value})});
+    ['n-domain','n-target','n-extra','n-user','n-pass'].forEach(i=>$(i).value='');
+    msg('smsg',true,'Site added. Live with HTTPS in seconds.');
+    loadSites();
+  }catch(e){msg('smsg',false,e)}
+}
+async function delSite(d){
+  if(!confirm('Remove '+d+'?'))return;
+  try{await api('/api/sites/'+d,{method:'DELETE'});msg('smsg',true,'Removed.');loadSites()}
+  catch(e){msg('smsg',false,e)}
+}
+
+let hist=[];
+async function exec(){
+  const cmd=$('cmd').value.trim(); if(!cmd)return;
+  $('termout').textContent='$ '+cmd+'\n… running';
+  hist.push(cmd);
+  try{
+    const d=await api('/api/exec',{method:'POST',body:JSON.stringify({command:cmd})});
+    $('termout').textContent='$ '+cmd+'\n'+(d.output||'(no output)')+'\n[exit '+d.exit+']';
+    $('termout').scrollTop=$('termout').scrollHeight;
+  }catch(e){$('termout').textContent='$ '+cmd+'\n'+e}
+  $('cmd').value='';
+}
+
+async function loadProcs(){
+  try{
+    const p=(await api('/api/processes')).processes;
+    $('procs').innerHTML=p.map(x=>
+      '<tr><td class="mut">'+x.pid+'</td><td>'+esc(x.user)+'</td>'+
+      '<td>'+(x.cpu>=1?'<b style="color:var(--warn)">'+x.cpu.toFixed(1)+'</b>':x.cpu.toFixed(1))+'</td>'+
+      '<td>'+fmt(x.rss*1024)+'</td><td style="font-family:var(--mono);font-size:12px;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(x.cmd)+'</td>'+
+      '<td style="text-align:right"><button class="danger" onclick="killP('+x.pid+')">Kill</button></td></tr>'
+    ).join('');
+  }catch(e){console.error(e)}
+}
+
+async function loadPorts(){
+  try{
+    const p=(await api('/api/ports')).ports;
+    $('portrows').innerHTML=p.map(x=>
+      '<tr><td><b style="font-family:var(--mono)">'+x.port+'</b></td>'+
+      '<td><span class="pill off">'+esc(x.proto)+'</span></td>'+
+      '<td style="font-family:var(--mono);font-size:12.5px">'+esc(x.proc)+(x.pid?' <span class="mut">('+x.pid+')</span>':'')+'</td>'+
+      '<td class="mut">'+esc(x.user)+'</td>'+
+      '<td>'+(x.est>0?'<span class="pill warn">'+x.est+' active</span>':'<span class="mut">0</span>')+'</td></tr>'
+    ).join('');
+  }catch(e){console.error(e)}
+}
+async function killP(pid){
+  if(!confirm('SIGKILL process '+pid+'?'))return;
+  try{await api('/api/kill',{method:'POST',body:JSON.stringify({pid})});loadProcs()}catch(e){alert(e)}
+}
+
+let allSvcs=[];
+async function loadSvcs(){
+  try{
+    allSvcs=(await api('/api/services')).services;
+    filterSvcs();
+  }catch(e){console.error(e)}
+}
+function filterSvcs(){
+  const f=($('svc-filter').value||'').toLowerCase();
+  $('svcs').innerHTML=allSvcs.filter(s=>s.unit.toLowerCase().includes(f)||s.desc.toLowerCase().includes(f)).map(s=>{
+    const on=s.active==='active';
+    return '<tr><td style="font-family:var(--mono);font-size:12.5px">'+esc(s.unit)+'</td>'+
+    '<td>'+(on?'<span class="pill ok">'+s.active+'</span>':'<span class="pill off">'+s.active+'</span>')+'</td>'+
+    '<td class="mut" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.desc)+'</td>'+
+    '<td style="text-align:right;white-space:nowrap">'+
+    '<button class="ghost" onclick="svc(\''+s.unit+'\',\'restart\')">↻</button> '+
+    '<button class="ghost" onclick="svc(\''+s.unit+'\',\'start\')">Start</button> '+
+    '<button class="danger" onclick="svc(\''+s.unit+'\',\'stop\')">Stop</button></td></tr>';
+  }).join('');
+}
+async function svc(u,a){
+  if(a==='stop'&&!confirm('Stop '+u+'?'))return;
+  try{await api('/api/service',{method:'POST',body:JSON.stringify({name:u,action:a})});loadSvcs()}catch(e){alert(e)}
+}
+
+async function chgPw(){
+  try{await api('/api/password',{method:'POST',body:JSON.stringify({current:$('c-cur').value,new:$('c-new').value})});
+    $('c-cur').value=$('c-new').value='';msg('cmsg',true,'Password updated.')}
+  catch(e){msg('cmsg',false,e)}
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.activeElement===$('lpw'))login()});
+api('/api/me').then(d=>d.authenticated?showApp():showLogin()).catch(showLogin);
+setInterval(()=>{if(!$('app').classList.contains('hidden')&&!$('t-dash').classList.contains('hidden'))refresh()},10000);
+
+/* ---------- file manager ---------- */
+let fcur='/';
+function basename(p){const i=p.lastIndexOf('/');return i<0?p:p.slice(i+1)||'/';}
+async function loadFiles(p){
+  if(p)fcur=p;
+  try{
+    const d=await api('/api/files?path='+encodeURIComponent(fcur));
+    fcur=d.path; $('f-path').value=fcur;
+    $('filerows').innerHTML=d.entries.map(x=>{
+      const full=fcur==='/'?'/'+x.name:fcur+'/'+x.name;
+      const icon=x.dir?'📁':x.link?'🔗':'📄';
+      const dt=new Date(x.mtime*1000).toLocaleString('id-ID',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      let acts='';
+      if(!x.dir)acts+='<button class="ghost" onclick="editFile(\''+full.replace(/'/g,"\\'")+'\')">Edit</button> '+
+                     '<button class="ghost" onclick="dlFile(\''+full.replace(/'/g,"\\'")+'\')">⬇</button> ';
+      acts+='<button class="ghost" onclick="renFile(\''+full.replace(/'/g,"\\'")+'\',\''+x.name+'\')">✎</button> '+
+            '<button class="danger" onclick="delFile(\''+full.replace(/'/g,"\\'")+'\')">🗑</button>';
+      return '<tr><td><button class="ghost" style="border:none;padding:0 6px 0 0;font-size:14px" onclick="openEntry(\''+full.replace(/'/g,"\\'")+'\','+x.dir+')">'+icon+' <b style="font-weight:600">'+esc(x.name)+'</b></button></td>'+
+        '<td class="mut">'+(x.dir?'—':fmt(x.size))+'</td><td class="mut">'+dt+'</td>'+
+        '<td class="mut" style="font-family:var(--mono);font-size:11.5px">'+x.mode.toString(8).padStart(3,'0')+(x.link?' →':'')+'</td>'+
+        '<td style="text-align:right;white-space:nowrap">'+acts+'</td></tr>';
+    }).join('')||'<tr><td colspan="5" class="mut">(empty)</td></tr>';
+  }catch(e){msg('fmsg',false,e)}
+}
+function openEntry(full,isDir){
+  if(isDir)loadFiles(full); else editFile(full);
+}
+function goPath(){const p=$('f-path').value.trim();if(p)loadFiles(p)}
+function upDir(){const i=fcur.lastIndexOf('/');loadFiles(i<=0?'/':fcur.slice(0,i))}
+function fmsg(ok,text){const m=$('fmsg');m.className='msg '+(ok?'ok':'err');m.textContent=text;setTimeout(()=>m.className='msg',5000)}
+function editFile(p){
+  api('/api/file/view?path='+encodeURIComponent(p)).then(d=>{
+    $('fedit-path').textContent=p;$('fedit-content').value=d.content;
+    $('fedit').classList.remove('hidden');$('fedit').scrollIntoView({behavior:'smooth'});
+  }).catch(e=>fmsg(false,e));
+}
+async function saveEditFile(){
+  try{
+    await api('/api/file/save',{method:'POST',body:JSON.stringify({path:$('fedit-path').textContent,content:$('fedit-content').value})});
+    fmsg(true,'Saved.');$('fedit').classList.add('hidden');loadFiles();
+  }catch(e){fmsg(false,e)}
+}
+function dlFile(p){window.open('/api/file/download?path='+encodeURIComponent(p),'_blank')}
+async function delFile(p){
+  if(!confirm('Delete '+p+'?'+(p.length<30?'\n\n(this is recursive if it is a folder!)':'')))return;
+  try{await api('/api/file/delete',{method:'POST',body:JSON.stringify({path:p})});fmsg(true,'Deleted.');$('fedit').classList.add('hidden');loadFiles()}
+  catch(e){fmsg(false,e)}
+}
+async function renFile(full,name){
+  const nn=prompt('Rename / move to (absolute path):',full); if(!nn||nn===full)return;
+  try{await api('/api/file/rename',{method:'POST',body:JSON.stringify({from:full,to:nn})});fmsg(true,'Renamed.');loadFiles()}
+  catch(e){fmsg(false,e)}
+}
+async function mkPrompt(kind){
+  const name=prompt(kind==='dir'?'New folder name (in '+fcur+'):':'New file name (in '+fcur+'):');
+  if(!name)return;
+  const clean=name.replace(/.*[\/\\]/,''); if(!clean){fmsg(false,'invalid name');return}
+  const full=(fcur==='/'?'/':fcur+'/')+clean;
+  try{
+    if(kind==='dir')await api('/api/file/mkdir',{method:'POST',body:JSON.stringify({path:full})});
+    else await api('/api/file/save',{method:'POST',body:JSON.stringify({path:full,content:''})});
+    loadFiles();
+  }catch(e){fmsg(false,e)}
+}
+async function uploadFile(input){
+  const file=input.files[0]; if(!file)return;
+  const clean=file.name.replace(/.*[\/\\]/,'');
+  const full=(fcur==='/'?'/':fcur+'/')+clean;
+  const reader=new FileReader();
+  reader.onload=async()=>{
+    try{
+      await api('/api/file/upload',{method:'POST',body:JSON.stringify({path:full,b64:reader.result.split(',')[1]})});
+      fmsg(true,'Uploaded '+clean);loadFiles();
+    }catch(e){fmsg(false,e)}
+  };
+  reader.readAsDataURL(file);
+  input.value='';
+}
+
+if(window.particlesJS){
+  particlesJS('particles-js',{
+    particles:{
+      number:{value:55,density:{enable:true,value_area:900}},
+      color:{value:["#4f8cff","#9f6bff","#34d399"]},
+      shape:{type:"circle"},
+      opacity:{value:0.35,random:true},
+      size:{value:2.2,random:true},
+      line_linked:{enable:true,distance:140,color:"#4f8cff",opacity:0.12,width:1},
+      move:{enable:true,speed:0.7,direction:"none",random:true,straight:false,out_mode:"out"}
+    },
+    interactivity:{
+      detect_on:"window",
+      events:{onhover:{enable:true,mode:"grab"},onclick:{enable:true,mode:"push"},resize:true},
+      modes:{grab:{distance:140,line_linked:{opacity:0.3}},push:{particles_nb:3}}
+    },
+    retina_detect:true
+  });
+}
+</script>
+</body>
+</html>
